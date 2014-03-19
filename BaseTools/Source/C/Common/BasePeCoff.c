@@ -715,6 +715,20 @@ Returns:
     RelocBaseEnd = (EFI_IMAGE_BASE_RELOCATION *) ((UINTN) RelocBase + (UINTN) RelocDir->Size - 1);
   }
   
+  // In order for page relative code relocations to work on AArch64 we need to
+  // ensure that any address adjustment to images are 4k page aligned. The page
+  // relative relocations are processed at build time as we do not have enough
+  // information at runtime to recalculate them.
+  // The PE/COFF Base relocation types do not have a matching type to describe
+  // page relative relocations so we do not know if they may be present in the
+  // images. We must assume they are present and ensure the image is properly
+  // aligned to keep these relocations valid.
+  if (ImageContext->Machine == EFI_IMAGE_MACHINE_AARCH64) {
+    if ((Adjust & 0xfff) != 0x0) {
+      return RETURN_LOAD_ERROR;
+    }
+  }
+
   //
   // Run the relocation information and apply the fixups
   //

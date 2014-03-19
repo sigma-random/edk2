@@ -128,7 +128,7 @@
     <Command.MSFT, Command.INTEL>
         "$(CC)" /Fo${dst} $(CC_FLAGS) $(INC) ${src}
 
-    <Command.GCC, Command.RVCT>
+    <Command.GCC, Command.RVCT, Command.ARM>
         # For RVCTCYGWIN CC_FLAGS must be first to work around pathing issues
         "$(CC)" $(CC_FLAGS) -o ${dst} $(INC) ${src}
         "$(SYMRENAME)" $(SYMRENAME_FLAGS) ${dst}
@@ -150,7 +150,7 @@
     <InputFile.MSFT, InputFile.INTEL, InputFile.RVCT>
         ?.asm, ?.Asm, ?.ASM
 
-    <InputFile.GCC>
+    <InputFile.GCC, InputFile.ARM>
         ?.S, ?.s
 
     <ExtraDependency>
@@ -164,7 +164,7 @@
         Trim --source-code --convert-hex -o ${d_path}(+)${s_base}.iii ${d_path}(+)${s_base}.i
         "$(ASM)" /Fo${dst} $(ASM_FLAGS) /I${s_path} $(INC) ${d_path}(+)${s_base}.iii
 
-    <Command.GCC, Command.RVCT>
+    <Command.GCC, Command.RVCT, Command.ARM>
         "$(PP)" $(PP_FLAGS) $(INC) ${src} > ${d_path}(+)${s_base}.i
         Trim --trim-long --source-code -o ${d_path}(+)${s_base}.iii ${d_path}(+)${s_base}.i
         # For RVCTCYGWIN ASM_FLAGS must be first to work around pathing issues
@@ -234,7 +234,7 @@
     <Command.RVCT>
         "$(SLINK)" $(SLINK_FLAGS) ${dst} --via $(OBJECT_FILES_LIST)
     
-    <Command.RVCTCYGWIN, Command.ARMGCC, Command.ARMLINUXGCC>
+    <Command.RVCTCYGWIN, Command.ARMGCC, Command.ARMLINUXGCC, Command.ARM>
         # $(OBJECT_FILES_LIST) has wrong paths for cygwin
         "$(SLINK)" $(SLINK_FLAGS) ${dst} $(OBJECT_FILES)
 
@@ -264,7 +264,7 @@
     <Command.RVCT>
         "$(DLINK)" $(DLINK_FLAGS) -o ${dst} $(DLINK_SPATH) --via $(STATIC_LIBRARY_FILES_LIST) $(DLINK2_FLAGS)
 
-    <Command.RVCTCYGWIN>
+    <Command.RVCTCYGWIN, Command.ARM>
         #$(STATIC_LIBRARY_FILES_LIST) has wrong paths for cygwin
         "$(DLINK)" $(DLINK_FLAGS) -o ${dst} $(DLINK_SPATH) $(STATIC_LIBRARY_FILES) $(DLINK2_FLAGS)
 
@@ -294,7 +294,7 @@
     <Command.RVCT>
         "$(DLINK)" $(DLINK_FLAGS) -o ${dst} $(DLINK_SPATH) --via $(STATIC_LIBRARY_FILES_LIST) $(DLINK2_FLAGS)
 
-    <Command.RVCTCYGWIN>
+    <Command.RVCTCYGWIN, Command.ARM>
         #$(STATIC_LIBRARY_FILES_LIST) has the wrong paths for cygwin
         "$(DLINK)" $(DLINK_FLAGS) -o ${dst} $(DLINK_SPATH) $(STATIC_LIBRARY_FILES) $(DLINK2_FLAGS)
 
@@ -309,7 +309,7 @@
     <OutputFile>
         $(DEBUG_DIR)(+)$(MODULE_NAME).efi
 
-    <Command.MSFT, Command.INTEL, Command.RVCT, Command.ARMGCC, Command.ARMLINUXGCC>  
+    <Command.MSFT, Command.INTEL, Command.RVCT, Command.ARMGCC, Command.ARMLINUXGCC, Command.ARM>
         "$(GENFW)" -e $(MODULE_TYPE) -o ${dst} ${src} $(GENFW_FLAGS)
         $(CP) ${dst} $(OUTPUT_DIR)
         $(CP) ${dst} $(BIN_DIR)
@@ -557,7 +557,7 @@
     <OutputFile.MSFT, OutputFile.INTEL, OutputFile.GCC>
         $(OUTPUT_DIR)(+)$(MODULE_NAME)hii.lib
 
-    <OutputFile.XCODE, OutputFile.RVCT, OutputFile.ARMGCC>
+    <OutputFile.XCODE, OutputFile.RVCT, OutputFile.ARMGCC, OutputFile.ARM>
         $(OUTPUT_DIR)(+)$(MODULE_NAME)hii.rc
 
     <Command.MSFT, Command.INTEL>

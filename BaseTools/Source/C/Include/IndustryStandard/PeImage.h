@@ -517,7 +517,6 @@ typedef struct {
 #define EFI_IMAGE_REL_BASED_IA64_IMM64    9
 #define EFI_IMAGE_REL_BASED_DIR64         10
 
-
 ///
 /// Line number format.
 ///

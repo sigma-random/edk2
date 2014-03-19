@@ -466,6 +466,64 @@ PeCoffLoaderRelocateArmImage (
   return RETURN_SUCCESS;
 }
 
+
+/**
+  Update AArch64 instruction immediate address data.
+
+  @param  Instruction   Pointer to AArch64 instruction to update
+  @param  Value         New value to patch into the instruction. Signed value
+                        to preserve sign extension where needed. Some
+                        instructions can have positive and negative values.
+
+**/
+// The values below are used to match instructions based on the architecture encoding
+// Don't support shifted imm12 for ADD instructions. Set as 0 in MASK and INST
+#define AARCH64_ADD_MASK       0x1FC00000
+#define AARCH64_ADD_INST       0x11000000
+#define AARCH64_ADD_IMM        0x003FFC00
+#define IS_AARCH64_ADD(x)      ((x & AARCH64_ADD_MASK)  == AARCH64_ADD_INST)
+#define AARCH64_ADRP_MASK      0x9f000000
+#define AARCH64_ADRP_INST      0x90000000
+#define AARCH64_ADRP_IMM       0x60FFFFE0
+#define IS_AARCH64_ADRP(x)     ((x & AARCH64_ADRP_MASK) == AARCH64_ADRP_INST)
+#define AARCH64_LDST_MASK      0x3b000000
+#define AARCH64_LDST_INST      0x39000000
+#define AARCH64_LDST_IMM       0x003FFC00
+#define IS_AARCH64_LDST(x)     ((x & AARCH64_LDST_MASK) == AARCH64_LDST_INST)
+
+RETURN_STATUS
+EFIAPI
+Aarch64ImmediatePatch (
+  IN OUT UINT32 *Instruction,
+  IN     INT32   Value
+  )
+{
+  UINT32        Patch;
+  RETURN_STATUS Status;
+
+  Status = RETURN_UNSUPPORTED;
+
+  // Disassemble and update the instruction
+  if (IS_AARCH64_ADD (*Instruction)) {
+    Patch = Value << 10;
+    *Instruction = (*Instruction & ~AARCH64_ADD_IMM) | Patch;
+    Status = RETURN_SUCCESS;
+  } else if (IS_AARCH64_ADRP (*Instruction)) {
+    Patch = ((Value & 0x3) << 29) | (((Value & 0x1FFFFC) >> 2) << 5);
+    *Instruction = (*Instruction & ~AARCH64_ADRP_IMM) | Patch;
+    Status = RETURN_SUCCESS;
+  } else if (IS_AARCH64_LDST (*Instruction)) {
+    // Relocation types LDST8,16,32,64,128 specify different bitsizes.
+    // The Calling function knows the relocation type and has already masked and
+    // scaled the address as needed.
+    Patch = Value << 10;
+    *Instruction = (*Instruction & ~AARCH64_LDST_IMM) | Patch;
+    Status = RETURN_SUCCESS;
+  }
+
+  return Status;
+}
+
 RETURN_STATUS
 PeCoffLoaderRelocateAArch64Image (
   IN     UINT16       *Reloc,

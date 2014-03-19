@@ -205,6 +205,19 @@ ThumbMovwMovtImmediatePatch (
   IN     UINT32 Address
   );
 
+/**
+  Update AArch64 instruction immediate address data.
+
+  @param  Instruction   Pointer to AArch64 instruction to update
+  @param  Address       New addres to patch into the instruction
+
+**/
+RETURN_STATUS
+EFIAPI
+Aarch64ImmediatePatch (
+  IN OUT UINT32 *Instruction,
+  IN     INT32   Val
+  );
 
 
 #endif

@@ -2599,7 +2599,7 @@ class ModuleAutoGen(AutoGen):
             #
             if self.PlatformInfo.ToolChainFamily in ('MSFT'):
                 gBuildOptIncludePattern = re.compile(r"(?:.*?)/I[ \t]*([^ ]*)", re.MULTILINE|re.DOTALL)
-            elif self.PlatformInfo.ToolChainFamily in ('INTEL', 'GCC', 'RVCT'):
+            elif self.PlatformInfo.ToolChainFamily in ('INTEL', 'GCC', 'RVCT', 'ARM'):
                 gBuildOptIncludePattern = re.compile(r"(?:.*?)-I[ \t]*([^ ]*)", re.MULTILINE|re.DOTALL)
             else:
                 #
@@ -2616,7 +2616,7 @@ class ModuleAutoGen(AutoGen):
                 except KeyError:
                     FlagOption = ''
                 
-                if self.PlatformInfo.ToolChainFamily != 'RVCT':
+                if self.PlatformInfo.ToolChainFamily != 'RVCT' and self.PlatformInfo.ToolChainFamily != 'ARM':
                     IncPathList = [NormPath(Path, self.Macros) for Path in gBuildOptIncludePattern.findall(FlagOption)]
                 else:
                     #

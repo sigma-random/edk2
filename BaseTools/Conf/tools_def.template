@@ -665,6 +665,7 @@ DEFINE SOURCERY_CYGWIN_TOOLS = /cygdrive/c/Program Files/CodeSourcery/Sourcery G
 #   GCC            - GNU GCC
 #   INTEL          - INTEL
 #   RVCT           - ARM RealView Toolchain
+#   ARM            - ARM Toolchain
 ####################################################################################
 ####################################################################################
 #
@@ -6653,6 +6654,99 @@ RELEASE_RVCTCYGWIN_ARM_CC_FLAGS  = "$(CCPATH_FLAG)" $(ARCHCC_FLAGS) $(PLATFORM_F
 
 ####################################################################################
 #
+# ARM Common
+#
+####################################################################################
+
+DEFINE ARM_ALL_ASM_FLAGS   = -c -x assembler
+DEFINE ARM_ALL_CC_FLAGS    = -mcmodel=small -c -fno-short-enums -fshort-wchar -fno-strict-aliasing -Wall -Wno-missing-braces -fomit-frame-pointer -ffreestanding -c -include AutoGen.h -fno-stack-protector -Wno-extra-tokens -Wno-invalid-pp-token -Wno-comment -mno-unaligned-access -ffunction-sections -fdata-sections
+DEFINE ARM_ALL_DLINK_FLAGS = --emit-relocs --ro-base 0 --no_scanlib --no_exceptions --datacompressor off --strict --symbols --diag_style=ide --remove
+
+####################################################################################
+#
+# ARM Tools - Windows
+#
+####################################################################################
+#   ARM         - Tools from ARM
+
+*_ARM_*_*_FAMILY          = ARM
+
+*_ARM_*_MAKE_PATH         = make
+
+#
+# Use default values, or override in DSC file
+#
+*_ARM_AARCH64_ARCHCC_FLAGS    = -target aarch64-arm-none-eabi
+*_ARM_AARCH64_ARCHASM_FLAGS   = -target aarch64-arm-none-eabi
+
+*_ARM_AARCH64_ARCHDLINK_FLAGS =
+*_ARM_AARCH64_PLATFORM_FLAGS  =
+
+*_ARM_AARCH64_DLINK_FLAGS     = $(ARCHDLINK_FLAGS) DEF(ARM_ALL_DLINK_FLAGS) --entry $(IMAGE_ENTRY_POINT) --map --list $(DEST_DIR_DEBUG)/$(BASE_NAME).map
+*_ARM_AARCH64_PP_FLAGS        = $(ARCHCC_FLAGS) $(PLATFORM_FLAGS) -E -x assembler-with-cpp -D__ARM__ -include $(DEST_DIR_DEBUG)/AutoGen.h
+*_ARM_AARCH64_VFRPP_FLAGS     = $(ARCHCC_FLAGS) $(PLATFORM_FLAGS) -x c -E -P  -DVFRCOMPILE -include $(DEST_DIR_DEBUG)/$(MODULE_NAME)StrDefs.h
+*_ARM_AARCH64_SLINK_FLAGS     = --partial -o
+
+  DEBUG_ARM_AARCH64_ASM_FLAGS = $(ARCHASM_FLAGS) $(PLATFORM_FLAGS) DEF(ARM_ALL_ASM_FLAGS) -g
+RELEASE_ARM_AARCH64_ASM_FLAGS = $(ARCHASM_FLAGS) $(PLATFORM_FLAGS) DEF(ARM_ALL_ASM_FLAGS)
+
+  DEBUG_ARM_AARCH64_CC_FLAGS  = $(ARCHCC_FLAGS) $(PLATFORM_FLAGS) DEF(ARM_ALL_CC_FLAGS) -O0 -g
+RELEASE_ARM_AARCH64_CC_FLAGS  = $(ARCHCC_FLAGS) $(PLATFORM_FLAGS) DEF(ARM_ALL_CC_FLAGS) -Os
+
+##################
+# ARM definitions
+##################
+*_ARM_AARCH64_CC_PATH         = ENV(ARM_TOOLS_PATH)armclang
+*_ARM_AARCH64_SLINK_PATH      = ENV(ARM_TOOLS_PATH)armlink
+*_ARM_AARCH64_DLINK_PATH      = ENV(ARM_TOOLS_PATH)armlink
+*_ARM_AARCH64_ASM_PATH        = ENV(ARM_TOOLS_PATH)armclang
+*_ARM_AARCH64_PP_PATH         = ENV(ARM_TOOLS_PATH)armclang
+*_ARM_AARCH64_VFRPP_PATH      = ENV(ARM_TOOLS_PATH)armclang
+*_ARM_AARCH64_FROMELF_PATH    = ENV(ARM_TOOLS_PATH)fromelf
+
+####################################################################################
+#
+# ARM Tools - Linux
+#
+####################################################################################
+#   ARMLINUX         - Tools from ARM in a Cygwin environment
+*_ARMLINUX_*_*_FAMILY               = ARM
+*_ARMLINUX_*_*_BUILDRULEFAMILY      = ARMLINUX
+
+*_ARMLINUX_*_MAKE_PATH       = make
+
+#
+# Use default values, or override in DSC file
+#
+*_ARMLINUX_AARCH64_ARCHCC_FLAGS    = -target aarch64-arm-none-eabi
+*_ARMLINUX_AARCH64_ARCHASM_FLAGS   = -target aarch64-arm-none-eabi
+*_ARMLINUX_AARCH64_ARCHDLINK_FLAGS =
+*_ARMLINUX_AARCH64_PLATFORM_FLAGS  =
+
+*_ARMLINUX_AARCH64_DLINK_FLAGS     = $(ARCHDLINK_FLAGS) DEF(ARM_ALL_DLINK_FLAGS) --entry $(IMAGE_ENTRY_POINT) --map --list $(DEST_DIR_DEBUG)/$(BASE_NAME).map
+*_ARMLINUX_AARCH64_VFRPP_FLAGS     = $(ARCHCC_FLAGS) $(PLATFORM_FLAGS) -x c -E -P  -DVFRCOMPILE -include $(DEST_DIR_DEBUG)/$(MODULE_NAME)StrDefs.h
+*_ARMLINUX_AARCH64_SLINK_FLAGS     = --partial -o
+*_ARMLINUX_AARCH64_PP_FLAGS        = $(ARCHCC_FLAGS) $(PLATFORM_FLAGS) -E -x assembler-with-cpp -D__ARM__ -include $(DEST_DIR_DEBUG)/AutoGen.h
+
+  DEBUG_ARMLINUX_AARCH64_ASM_FLAGS = $(ARCHASM_FLAGS) $(PLATFORM_FLAGS) DEF(ARM_ALL_ASM_FLAGS) -g
+RELEASE_ARMLINUX_AARCH64_ASM_FLAGS = $(ARCHASM_FLAGS) $(PLATFORM_FLAGS) DEF(ARM_ALL_ASM_FLAGS)
+
+  DEBUG_ARMLINUX_AARCH64_CC_FLAGS  = $(ARCHCC_FLAGS) $(PLATFORM_FLAGS) DEF(ARM_ALL_CC_FLAGS) -O0 -g
+RELEASE_ARMLINUX_AARCH64_CC_FLAGS  = $(ARCHCC_FLAGS) $(PLATFORM_FLAGS) DEF(ARM_ALL_CC_FLAGS) -Os
+
+##################
+# ARM definitions
+##################
+*_ARMLINUX_AARCH64_CC_PATH         = ENV(ARM_TOOLS_PATH)armclang
+*_ARMLINUX_AARCH64_SLINK_PATH      = ENV(ARM_TOOLS_PATH)armlink
+*_ARMLINUX_AARCH64_DLINK_PATH      = ENV(ARM_TOOLS_PATH)armlink
+*_ARMLINUX_AARCH64_ASM_PATH        = ENV(ARM_TOOLS_PATH)armclang
+*_ARMLINUX_AARCH64_PP_PATH         = ENV(ARM_TOOLS_PATH)armclang
+*_ARMLINUX_AARCH64_VFRPP_PATH      = ENV(ARM_TOOLS_PATH)armclang
+*_ARMLINUX_AARCH64_FROMELF_PATH    = ENV(ARM_TOOLS_PATH)fromelf
+
+
+####################################################################################
 # ARM EABI GCC (www.codesourcery.com)
 #
 ####################################################################################

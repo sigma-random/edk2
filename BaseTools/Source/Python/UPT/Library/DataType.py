@@ -946,7 +946,8 @@ MODEL_META_DATA_COMPONENT_SOURCE_OVERRIDE_PATH = 5015
 TOOL_FAMILY_LIST = ["MSFT",
                     "INTEL",
                     "GCC",
-                    "RVCT"
+                    "RVCT",
+                    "ARM"
                     ]
 
 TYPE_HOB_SECTION = 'HOB'

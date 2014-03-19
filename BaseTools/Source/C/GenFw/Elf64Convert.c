@@ -685,56 +685,148 @@ WriteSections64 (
             Error (NULL, 0, 3000, "Invalid", "%s unsupported ELF EM_X86_64 relocation 0x%x.", mInImageName, (unsigned) ELF_R_TYPE(Rel->r_info));
           }
         } else if (mEhdr->e_machine == EM_AARCH64) {
+          // For ease of use specify relocations in terms of P, S and A as
+          // described the AArch64 ELF specification
+          UINT64 P, S;
+          INT64  A;
+          RETURN_STATUS Status;
 
-          // AARCH64 GCC uses RELA relocation, so all relocations have to be fixed up.
-          // As opposed to ARM32 using REL.
+          // P - Address of the 'Place' being relocated
+          // S - Address of the Symbol
+          // A - The Addend for the relocation
+          P = (UINT64)(SecOffset + (Rel->r_offset - SecShdr->sh_addr));
+          S = (UINT64)(Sym->st_value - SymShdr->sh_addr + mCoffSectionsOffset[Sym->st_shndx]);
+          A = (INT64)(Rel->r_addend);
 
+          // Some versions of the AArch64 GCC linker does not update the ELF
+          // relocations properly when doing the final static link. For this
+          // reason we do not fully recalculate the relocations that it might
+          // use with the Large memory model. We rely on the assumption that the
+          // code sections affected by these relocations are not reordered going
+          // from ELF to PE/COFF and a simple offset adjustment is sufficient.
+          // In the case of the ARM LLVM based compiler the relocation
+          // information is correct and as such we can use the small memory
+          // model and recalculate the relocations based on 'Place', 'Symbol'
+          // and 'Addend' information. At some point in the future this should
+          // be be done for AArch64 GCC as well.
           switch (ELF_R_TYPE(Rel->r_info)) {
 
+          // Ideally we should recalculate all relocations in case the code
+          // sections moved around, but in some AArch64 GCC versions this is
+          // currently not working correctly.
+
+          // Relative relocations
           case R_AARCH64_ADR_PREL_LO21:
-            if  (Rel->r_addend != 0 ) { /* TODO */
-              Error (NULL, 0, 3000, "Invalid", "AArch64: R_AARCH64_ADR_PREL_LO21 Need to fixup with addend!.");
-            }
+            // GCC with Large memory model uses this one. Leave as is for now.
+            // Reloc = (S+A-P)
+            VerboseMsg ("R_AARCH64_ADR_PREL_LO21: Targ = 0x%08lx, *Targ=0x%08x\n", (UINT64)Targ, *(UINT32 *)Targ);
             break;
 
           case R_AARCH64_CONDBR19:
-            if  (Rel->r_addend != 0 ) { /* TODO */
-              Error (NULL, 0, 3000, "Invalid", "AArch64: R_AARCH64_CONDBR19 Need to fixup with addend!.");
-            }
+            // GCC with Large memory model uses this one. Leave as is for now.
+            // Reloc = (S+A-P)
+            VerboseMsg ("R_AARCH64_CONDBR19: Targ = 0x%08lx, *Targ=0x%08x\n", (UINT64)Targ, *(UINT32 *)Targ);
             break;
 
           case R_AARCH64_LD_PREL_LO19:
-            if  (Rel->r_addend != 0 ) { /* TODO */
-              Error (NULL, 0, 3000, "Invalid", "AArch64: R_AARCH64_LD_PREL_LO19 Need to fixup with addend!.");
-            }
+            // GCC with Large memory model uses this one. Leave as is for now.
+            // Reloc = (S+A-P)
+            VerboseMsg ("R_AARCH64_LD_PREL_LO19: Targ = 0x%08lx, *Targ=0x%08x\n", (UINT64)Targ, *(UINT32 *)Targ);
             break;
 
           case R_AARCH64_CALL26:
+            // GCC with Large memory model uses this one. Leave as is for now.
+            // Reloc = (S+A-P)
+            VerboseMsg ("R_AARCH64_CALL26: Targ = 0x%08lx, *Targ=0x%08x\n", (UINT64)Targ, *(UINT32 *)Targ);
+            break;
+
           case R_AARCH64_JUMP26:
-            if  (Rel->r_addend != 0 ) {
-              // Some references to static functions sometime start at the base of .text + addend.
-              // It is safe to ignore these relocations because they patch a `BL` instructions that
-              // contains an offset from the instruction itself and there is only a single .text section.
-              // So we check if the symbol is a "section symbol"
-              if (ELF64_ST_TYPE (Sym->st_info) == STT_SECTION) {
-                break;
-              }
-              Error (NULL, 0, 3000, "Invalid", "AArch64: R_AARCH64_JUMP26 Need to fixup with addend!.");
-            }
+            // GCC with Large memory model uses this one. Leave as is for now.
+            // Reloc = (S+A-P)
+            VerboseMsg ("R_AARCH64_JUMP26: Targ = 0x%08lx, *Targ=0x%08x\n", (UINT64)Targ, *(UINT32 *)Targ);
             break;
 
           case R_AARCH64_ADR_PREL_PG_HI21:
-            // TODO : AArch64 'small' memory model.
-            Error (NULL, 0, 3000, "Invalid", "WriteSections64(): %s unsupported ELF EM_AARCH64 relocation R_AARCH64_ADR_PREL_PG_HI21.", mInImageName);
+            // We need to fully recalculate this relocation. This is used with the small memory model.
+            // Reloc = PAGE(S+A) - PAGE(P) ; Page = 4k
+            VerboseMsg ("R_AARCH64_ADR_PREL_PG_HI21: Targ = 0x%08lx, *Targ=0x%08x\n", (UINT64)Targ, *(UINT32 *)Targ);
+            INT32 Tmp = R_AARCH64_PAGE (S + A) - R_AARCH64_PAGE (P);
+            Status = Aarch64ImmediatePatch ((UINT32 *)Targ, Tmp / 4096);
+            if (Status != RETURN_SUCCESS) {
+              Error (NULL, 0, 3000, "Invalid", "WriteSections64(): %s Patching ELF EM_AARCH64 relocation failed.", mInImageName);
+            }
             break;
 
           case R_AARCH64_ADD_ABS_LO12_NC:
-            // TODO : AArch64 'small' memory model.
-            Error (NULL, 0, 3000, "Invalid", "WriteSections64(): %s unsupported ELF EM_AARCH64 relocation R_AARCH64_ADD_ABS_LO12_NC.", mInImageName);
+            // Used with R_AARCH64_ADR_PREL_PG_HI21. This is used with the small memory model.
+            // Reloc = (S+A)
+            VerboseMsg ("R_AARCH64_ADD_ABS_LO12_NC: Targ = 0x%08lx, *Targ=0x%08x\n", (UINT64)Targ, *(UINT32 *)Targ);
+            Status = Aarch64ImmediatePatch ((UINT32 *)Targ, (S + A) & R_AARCH64_PAGE_MASK);
+            if (Status != RETURN_SUCCESS) {
+              Error (NULL, 0, 3000, "Invalid", "WriteSections64(): %s Patching ELF EM_AARCH64 relocation failed.", mInImageName);
+            }
+            break;
+
+          case R_AARCH64_LDST8_ABS_LO12_NC:
+            // Used with R_AARCH64_ADR_PREL_PG_HI21. This is used with the small memory model.
+            // Reloc = (S+A)
+            VerboseMsg ("R_AARCH64_LDST8_ABS_LO12_NC: Targ = 0x%08lx, *Targ=0x%08x\n", (UINT64)Targ, *(UINT32 *)Targ);
+            Status = Aarch64ImmediatePatch ((UINT32 *)Targ, (S + A) & R_AARCH64_PAGE_MASK);
+            if (Status != RETURN_SUCCESS) {
+              Error (NULL, 0, 3000, "Invalid", "WriteSections64(): %s Patching ELF EM_AARCH64 relocation failed.", mInImageName);
+            }
+            break;
+
+          case R_AARCH64_LDST16_ABS_LO12_NC:
+            // Used with R_AARCH64_ADR_PREL_PG_HI21. This is used with the small memory model.
+            // Reloc = (S+A)
+            VerboseMsg ("R_AARCH64_LDST16_ABS_LO12_NC: Targ = 0x%08lx, *Targ=0x%08x\n", (UINT64)Targ, *(UINT32 *)Targ);
+            Status = Aarch64ImmediatePatch ((UINT32 *)Targ, ((S + A) & R_AARCH64_PAGE_MASK) >> 1 );
+            if (Status != RETURN_SUCCESS) {
+              Error (NULL, 0, 3000, "Invalid", "WriteSections64(): %s Patching ELF EM_AARCH64 relocation failed.", mInImageName);
+            }
+            break;
+
+          case R_AARCH64_LDST32_ABS_LO12_NC:
+            // Used with R_AARCH64_ADR_PREL_PG_HI21. This is used with the small memory model.
+            // Reloc = (S+A)
+            VerboseMsg ("R_AARCH64_LDST32_ABS_LO12_NC: Targ = 0x%08lx, *Targ=0x%08x\n", (UINT64)Targ, *(UINT32 *)Targ);
+            Status = Aarch64ImmediatePatch ((UINT32 *)Targ, ((S + A) & R_AARCH64_PAGE_MASK) >> 2 );
+            if (Status != RETURN_SUCCESS) {
+              Error (NULL, 0, 3000, "Invalid", "WriteSections64(): %s Patching ELF EM_AARCH64 relocation failed.", mInImageName);
+            }
+            break;
+
+          case R_AARCH64_LDST64_ABS_LO12_NC:
+            // Used with R_AARCH64_ADR_PREL_PG_HI21. This is used with the small memory model.
+            // Reloc = (S+A)
+            VerboseMsg ("R_AARCH64_LDST64_ABS_LO12_NC: Targ = 0x%08lx, *Targ=0x%08x\n", (UINT64)Targ, *(UINT32 *)Targ);
+            Status = Aarch64ImmediatePatch ((UINT32 *)Targ, ((S + A) & R_AARCH64_PAGE_MASK) >> 3 );
+            if (Status != RETURN_SUCCESS) {
+              Error (NULL, 0, 3000, "Invalid", "WriteSections64(): %s Patching ELF EM_AARCH64 relocation failed.", mInImageName);
+            }
+            break;
+
+          case R_AARCH64_LDST128_ABS_LO12_NC:
+            // Used with R_AARCH64_ADR_PREL_PG_HI21. This is used with the small memory model.
+            // Reloc = (S+A)
+            VerboseMsg ("R_AARCH64_LDST128_ABS_LO12_NC: Targ = 0x%08lx, *Targ=0x%08x\n", (UINT64)Targ, *(UINT32 *)Targ);
+            Status = Aarch64ImmediatePatch ((UINT32 *)Targ, ((S + A) & R_AARCH64_PAGE_MASK) >> 4 );
+            if (Status != RETURN_SUCCESS) {
+              Error (NULL, 0, 3000, "Invalid", "WriteSections64(): %s Patching ELF EM_AARCH64 relocation failed.", mInImageName);
+            }
             break;
 
           // Absolute relocations.
           case R_AARCH64_ABS64:
+            // GCC with Large memory model uses this one. Don't recalculate the
+            // relocation, just do the section offset adjustment. This assumes
+            // the relevant sections are not getting reordered.
+            // Reloc = (S+A)
+            VerboseMsg ("R_AARCH64_ABS64: Targ = 0x%08lx, *Targ=0x%08lx\n", (UINT64)Targ, *(UINT64 *)Targ);
+
+            // If S lives in bss (like global gST):
+            // *Targ = *Targ - elf-section-addr[bss] + coff-section-addr[bss]
             *(UINT64 *)Targ = *(UINT64 *)Targ - SymShdr->sh_addr + mCoffSectionsOffset[Sym->st_shndx];
             break;
 
@@ -814,17 +906,18 @@ WriteRelocations64 (
             case R_AARCH64_JUMP26:
               break;
 
+            // These relocations are used together
             case R_AARCH64_ADR_PREL_PG_HI21:
-              // TODO : AArch64 'small' memory model.
-              Error (NULL, 0, 3000, "Invalid", "WriteRelocations64(): %s unsupported ELF EM_AARCH64 relocation R_AARCH64_ADR_PREL_PG_HI21.", mInImageName);
-              break;
-
             case R_AARCH64_ADD_ABS_LO12_NC:
-              // TODO : AArch64 'small' memory model.
-              Error (NULL, 0, 3000, "Invalid", "WriteRelocations64(): %s unsupported ELF EM_AARCH64 relocation R_AARCH64_ADD_ABS_LO12_NC.", mInImageName);
+            case R_AARCH64_LDST8_ABS_LO12_NC:
+            case R_AARCH64_LDST16_ABS_LO12_NC:
+            case R_AARCH64_LDST32_ABS_LO12_NC:
+            case R_AARCH64_LDST64_ABS_LO12_NC:
+            case R_AARCH64_LDST128_ABS_LO12_NC:
               break;
 
             case R_AARCH64_ABS64:
+              // Write DIR64 to the PE/COFF reloc fixup list
               CoffAddFixup(
                 (UINT32) ((UINT64) mCoffSectionsOffset[RelShdr->sh_info]
                 + (Rel->r_offset - SecShdr->sh_addr)),

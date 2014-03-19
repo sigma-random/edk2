@@ -673,6 +673,10 @@ typedef struct {
 #define	R_AARCH64_TLS_DTPREL32			1031	/* DTPREL(S+A) */
 #define	R_AARCH64_TLS_DTPMOD32			1032	/* LDM(S) */
 #define	R_AARCH64_TLS_TPREL32			1033	/* DTPREL(S+A) */
+/* AArch64 page relative relocations use 4k pages. */
+#define R_AARCH64_PAGE_SIZE			0x1000
+#define R_AARCH64_PAGE_MASK			0xfffUL
+#define R_AARCH64_PAGE(x)			((x) & ~R_AARCH64_PAGE_MASK)
 
 #define	R_ALPHA_NONE		0	/* No reloc */
 #define	R_ALPHA_REFLONG		1	/* Direct 32 bit */
