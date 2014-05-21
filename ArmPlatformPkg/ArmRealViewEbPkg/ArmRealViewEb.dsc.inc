@@ -215,6 +215,7 @@
 
   XCODE:RELEASE_*_*_CC_FLAGS     = -DMDEPKG_NDEBUG
 
+  ARM:RELEASE_*_*_CC_FLAGS    = -DMDEPKG_NDEBUG
 
 ################################################################################
 #

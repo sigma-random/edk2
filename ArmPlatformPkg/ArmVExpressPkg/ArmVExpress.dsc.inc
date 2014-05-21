@@ -228,6 +228,8 @@
 
   GCC:RELEASE_*_*_CC_FLAGS  = -DMDEPKG_NDEBUG
 
+  ARM:RELEASE_*_*_CC_FLAGS  = -DMDEPKG_NDEBUG
+
 ################################################################################
 #
 # Pcd Section - list of all EDK II PCD Entries defined by this Platform
