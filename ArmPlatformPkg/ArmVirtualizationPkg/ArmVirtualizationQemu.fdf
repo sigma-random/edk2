@@ -256,18 +256,36 @@ READ_LOCK_STATUS   = TRUE
 #
 ############################################################################
 
-[Rule.Common.SEC]
+[Rule.ARM.SEC]
   FILE SEC = $(NAMED_GUID) RELOCS_STRIPPED {
     TE  TE Align = 128                  $(INF_OUTPUT)/$(MODULE_NAME).efi
   }
 
-[Rule.Common.PEI_CORE]
+[Rule.AARCH64.SEC]
+  FILE SEC = $(NAMED_GUID) RELOCS_STRIPPED {
+    TE  TE    Align = 4K                $(INF_OUTPUT)/$(MODULE_NAME).efi
+  }
+
+[Rule.ARM.PEI_CORE]
   FILE PEI_CORE = $(NAMED_GUID) {
     TE     TE Align = 8                 $(INF_OUTPUT)/$(MODULE_NAME).efi
     UI     STRING ="$(MODULE_NAME)" Optional
   }
 
-[Rule.Common.PEIM]
+[Rule.AARCH64.PEIM]
+  FILE PEIM = $(NAMED_GUID) {
+     PEI_DEPEX PEI_DEPEX Optional       $(INF_OUTPUT)/$(MODULE_NAME).depex
+     TE       TE Align = 4K             $(INF_OUTPUT)/$(MODULE_NAME).efi
+     UI       STRING="$(MODULE_NAME)" Optional
+  }
+
+[Rule.AARCH64.PEI_CORE]
+  FILE PEI_CORE = $(NAMED_GUID) {
+    TE     TE Align = 4K                $(INF_OUTPUT)/$(MODULE_NAME).efi
+    UI     STRING ="$(MODULE_NAME)" Optional
+  }
+
+[Rule.ARM.PEIM]
   FILE PEIM = $(NAMED_GUID) {
      PEI_DEPEX PEI_DEPEX Optional       $(INF_OUTPUT)/$(MODULE_NAME).depex
      TE       TE Align = 8              $(INF_OUTPUT)/$(MODULE_NAME).efi
