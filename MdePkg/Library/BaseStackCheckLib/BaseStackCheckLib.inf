@@ -30,6 +30,7 @@
 #
 
 [Sources]
+  BaseStackCheckGcc.c | ARM
   BaseStackCheckGcc.c | GCC
   BaseStackCheckGcc.c | RVCT
 
