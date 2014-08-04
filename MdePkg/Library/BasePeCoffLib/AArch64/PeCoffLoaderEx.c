@@ -18,7 +18,11 @@
 #include "BasePeCoffLibInternals.h"
 #include <Library/BaseLib.h>
 
-// Note: Currently only large memory model is supported by UEFI relocation code.
+// TODO AArch64 : Add relocations for small memory model. Currently only large
+//                memory model is supported by UEFI relocation code.
+//
+//                This functionality also exists in the basetools at :
+//                'edk2/BaseTools/Source/C/Common/PeCoffLoaderEx.c'
 
 /**
   Performs an AARCH64-based specific relocation fixup and is a no-op on other
@@ -40,25 +44,9 @@ PeCoffLoaderRelocateImageEx (
   IN UINT64      Adjust
   )
 {
-  UINT64      *Fixup64;
-
-  switch ((*Reloc) >> 12) {
-
-    case EFI_IMAGE_REL_BASED_DIR64:
-      Fixup64 = (UINT64 *) Fixup;
-      *Fixup64 = *Fixup64 + (UINT64) Adjust;
-      if (*FixupData != NULL) {
-        *FixupData = ALIGN_POINTER(*FixupData, sizeof(UINT64));
-        *(UINT64 *)(*FixupData) = *Fixup64;
-        *FixupData = *FixupData + sizeof(UINT64);
-      }
-      break;
-
-    default:
-      return RETURN_UNSUPPORTED;
-  }
-
-  return RETURN_SUCCESS;
+  // Currently all required runtime relocations are taken care of by common code.
+  // We should not get here.
+  return RETURN_UNSUPPORTED;
 }
 
 /**
@@ -105,23 +93,9 @@ PeHotRelocateImageEx (
   IN UINT64      Adjust
   )
 {
-  UINT64  *Fixup64;
+  /* FIXME:  Does this work?? Taken from Itanium. Not sure if AArch64 platform can do this. */
 
-  switch ((*Reloc) >> 12) {
-  case EFI_IMAGE_REL_BASED_DIR64:
-    Fixup64     = (UINT64 *) Fixup;
-    *FixupData  = ALIGN_POINTER (*FixupData, sizeof (UINT64));
-    if (*(UINT64 *) (*FixupData) == *Fixup64) {
-      *Fixup64 = *Fixup64 + (UINT64) Adjust;
-    }
-
-    *FixupData = *FixupData + sizeof (UINT64);
-    break;
-
-  default:
-    DEBUG ((EFI_D_ERROR, "PeHotRelocateEx:unknown fixed type\n"));
-    return RETURN_UNSUPPORTED;
-  }
-
-  return RETURN_SUCCESS;
+  // Currently all required runtime relocations are taken care of by common code.
+  // We should not get here.
+  return RETURN_UNSUPPORTED;
 }

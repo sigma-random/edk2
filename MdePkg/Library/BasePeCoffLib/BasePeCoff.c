@@ -1054,6 +1054,23 @@ PeCoffLoaderRelocateImage (
   }
   RelocBaseOrg = RelocBase;
 
+  // In order for page relative code relocations to work on AArch64 we need to
+  // ensure that any address adjustment to images are 4k page aligned. The page
+  // relative relocations are processed at build time as we do not have enough
+  // information at runtime to recalculate them.
+  // The PE/COFF Base relocation types do not have a matching type to describe
+  // page relative relocations so we do not know if they may be present in the
+  // images. We must assume they are present and ensure the image it properly
+  // aligned to keep these relocations valid.
+  if (ImageContext->Machine == IMAGE_FILE_MACHINE_ARM64) {
+    if ((Adjust & (BASE_4KB - 1)) != 0x0) {
+      // Check DEBUG and RELEASE code as it might build with
+      // a different layout depending on optimisation level etc.
+      ASSERT ((Adjust & (BASE_4KB - 1)) == 0);
+      return RETURN_LOAD_ERROR;
+    }
+  }
+
   //
   // If Adjust is not zero, then apply fix ups to the image
   //
